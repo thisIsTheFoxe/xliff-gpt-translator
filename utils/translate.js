@@ -11,14 +11,14 @@ const config = require('../config.json');
 
 async function translate(text, sourceLang, targetLang) {
     const messages = [
-        { role: 'system', content: `Translate the following text from ${sourceLang} to ${targetLang}, keeping any HTML code intact and "<|->". If the text contains website links, please maintain the original links without translating them.` },
+        {role: "system", "content": `You have been assigned the task of translating strings for an iOS app. Translate the following texts from ${sourceLang} to ${targetLang}, while preserving any HTML code and the placeholders \`<|->\`. Do not translate URLs or other placeholders like \`\${}\`. Ensure that the translations sound natural and contextually appropriate for an iOS app.\nThe app is designed for Jehovah's Witnesses. Note that terms like 'scripture' and 'NWT' can be translated as 'bible.' Additionally, 'Daily text,' 'Yeartext,' 'convention,' 'assembly,' and 'congregation' should be interpreted based on their meanings within the context of Jehovah's Witnesses.`},
         { role: 'user', content: text },
     ];
 
     try {
         const response = await axiosInstance.post('', {
             messages,
-            max_tokens: 2000,
+            max_tokens: 8000,
             temperature: 0.8,
             model: config.openai_model,
         });

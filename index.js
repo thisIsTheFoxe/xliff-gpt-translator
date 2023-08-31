@@ -20,7 +20,7 @@ checkAndCreateDir(outputDir);
 checkAndCreateDir(finishedDir);
 
 const files = fs.readdirSync(inputDir).filter(file => file.endsWith('.xliff'));
-
+const exclude = ["5gn8a8", "9yHXB9", "6Yhm7k", "8aWHpv", "HZUQ0M", "LB0XQL", "O3IgYS", "UdxrwD", "azP1UF", "eM6s2V", "mNhKep", "o5ideK", "qPlMkk", "qua4Se", "zWju8C"]
 
 // Create translation tasks for each file
 const translationTasks = files.map(file => {
@@ -38,19 +38,23 @@ const translationTasks = files.map(file => {
         const sourceLang = getLanguageName($('file').attr('source-language'));
         const targetLang = getLanguageName($('file').attr('target-language'));
         console.log(`Source language: ${sourceLang}, Target language: ${targetLang}`);
+        var stringsCount = 0
 
         // Split $("trans-unit") into subarrays of size nodesPerRequest
         const chunkedNodes = [];
         $("trans-unit").each(function (index) {
+            const id = $(this).attr('id');
+            if (exclude.some(excludedId => id.startsWith(excludedId))) return;
+            stringsCount += 1;
             if (index % nodesPerRequest === 0) {
                 chunkedNodes.push([]);
             }
             chunkedNodes[chunkedNodes.length - 1].push(this);
         });
-
+        
         // Define an array to store translation operation Promises
         const translationPromises = [];
-        console.log(`There are ${$("trans-unit").length} items to translate`);
+        console.log(`There are ${stringsCount} items to translate`);
 
         chunkedNodes.forEach((nodes, index) => {
             translationPromises.push(() => {
@@ -74,8 +78,14 @@ const translationTasks = files.map(file => {
                             const targetlatedText = isCdata
                                 ? `<![CDATA[${translatedTexts[i]}]]>`
                                 : `${translatedTexts[i]}`;
+                            
+                            // Check if target element exists, if not, create one
                             var target = $(node).find('target');
-                            target.html(targetlatedText);
+                            if (target && target.length === 0) {
+                                $(node).append(`<target>${targetlatedText}</target>`);
+                            } else {
+                                target.html(targetlatedText);
+                            }
                         });
                         fs.writeFileSync(outPath, $.xml());
                     })
