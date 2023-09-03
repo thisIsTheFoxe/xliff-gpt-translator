@@ -6,5 +6,6 @@
     "outputDir": "./output",
     "finishedDir": "./finished",
     "rateLimit": 3,
-    "nodesPerRequest": 5
+    "nodesPerRequest": 5,
+    "maxRetries": 3
 }

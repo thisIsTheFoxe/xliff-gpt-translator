@@ -14,6 +14,7 @@ const finishedDir = config.finishedDir || './finished';
 const rateLimit = config.rateLimit || 3;
 const intervalTime = (60 / rateLimit) * 1000;
 const nodesPerRequest = config.nodesPerRequest || 5;
+const maxRetries = config.maxRetries || 3;
 
 checkAndCreateDir(inputDir);
 checkAndCreateDir(outputDir);
@@ -51,7 +52,7 @@ const translationTasks = files.map(file => {
             }
             chunkedNodes[chunkedNodes.length - 1].push(this);
         });
-        
+
         // Define an array to store translation operation Promises
         const translationPromises = [];
         console.log(`There are ${stringsCount} items to translate`);
@@ -68,17 +69,16 @@ const translationTasks = files.map(file => {
                     })
                     .join('<|->');
 
-                return translate(combinedText, sourceLang, targetLang)
-                    .then((translatedText) => {
-                        // Fill in the corresponding positions after splitting in the same way
-                        const translatedTexts = translatedText.split('<|->');
+                return translateWithRetry($, combinedText, nodes.length, sourceLang, targetLang)
+                    .then((translatedTexts) => {
                         nodes.forEach((node, i) => {
                             const text = $(node).find('source').html();
+                            const encolatedtext = $('<div>').text(translatedTexts[i]).html();
                             const isCdata = text.startsWith('<![CDATA[') && text.endsWith(']]>');
                             const targetlatedText = isCdata
-                                ? `<![CDATA[${translatedTexts[i]}]]>`
-                                : `${translatedTexts[i]}`;
-                            
+                                ? `<![CDATA[${encolatedtext}]]>`
+                                : `${encolatedtext}`;
+
                             // Check if target element exists, if not, create one
                             var target = $(node).find('target');
                             if (target && target.length === 0) {
@@ -106,6 +106,32 @@ const translationTasks = files.map(file => {
         });
     };
 });
+
+async function translateWithRetry($, combinedText, nodesCount, sourceLang, targetLang, retryCount = 0) {
+    try {
+        const translatedText = await translate(combinedText, sourceLang, targetLang);
+
+        // Fill in the corresponding positions after splitting in the same way
+        const translatedTexts = translatedText.split('<|->');
+
+        if (translatedTexts.length !== nodesCount) {
+            throw new Error('String count mismatch');
+        }
+        return translatedTexts;
+    } catch (error) {
+        console.error(`Translation failed on attempt ${retryCount + 1}: ${error.message}`);
+        if (retryCount < maxRetries) {
+            const retryDelay = Math.pow(2, retryCount) * 1000;
+            console.log(`Retrying in ${retryDelay / 1000} seconds...`);
+            await new Promise((resolve) => setTimeout(resolve, retryDelay));
+            return translateWithRetry($, combinedText, nodesCount, sourceLang, targetLang, retryCount + 1);
+        } else {
+            console.error(`Max retries (${maxRetries}) reached. Giving up.`);
+            throw error;
+        }
+    }
+}
+
 
 (async () => {
     for (const task of translationTasks) {

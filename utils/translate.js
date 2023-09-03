@@ -24,7 +24,7 @@ async function translate(text, sourceLang, targetLang) {
         });
 
         const translatedText = response.data.choices[0].message.content;
-        console.log(`"${text}" => "${translatedText}"`);
+        console.log(`"${text}" => \n"${translatedText}"`);
 
         return translatedText;
     } catch (error) {
