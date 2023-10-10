@@ -15,6 +15,7 @@ const rateLimit = config.rateLimit || 3;
 const intervalTime = (60 / rateLimit) * 1000;
 const nodesPerRequest = config.nodesPerRequest || 5;
 const maxRetries = config.maxRetries || 3;
+const onlyUntranslated = config.onlyNew || false;
 
 checkAndCreateDir(inputDir);
 checkAndCreateDir(outputDir);
@@ -46,11 +47,12 @@ const translationTasks = files.map(file => {
         $("trans-unit").each(function (index) {
             const id = $(this).attr('id');
             if (exclude.some(excludedId => id.startsWith(excludedId))) return;
-            stringsCount += 1;
-            if (index % nodesPerRequest === 0) {
+            if (!onlyUntranslated && $(this).find('target').html() != null) return;
+            if (stringsCount % nodesPerRequest === 0) {
                 chunkedNodes.push([]);
             }
             chunkedNodes[chunkedNodes.length - 1].push(this);
+            stringsCount += 1;
         });
 
         // Define an array to store translation operation Promises
