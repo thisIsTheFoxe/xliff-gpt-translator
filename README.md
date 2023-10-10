@@ -47,8 +47,11 @@ Replace `YOUR_API_KEY` with your OpenAI API key:
   "outputDir": "./output",
   "finishedDir": "./finished",
   "rateLimit": 3,
-  "nodesPerRequest": 5
+  "nodesPerRequest": 5,
+  "maxRetries": 3,
+  "onlyUntranslated": true
 }
+
 ```
 
 ### Usage

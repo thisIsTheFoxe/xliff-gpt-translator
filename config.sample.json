@@ -7,5 +7,6 @@
     "finishedDir": "./finished",
     "rateLimit": 3,
     "nodesPerRequest": 5,
-    "maxRetries": 3
+    "maxRetries": 3,
+    "onlyUntranslated": true
 }
